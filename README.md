@@ -78,9 +78,13 @@ dataset_name = ucwinRoadData ; name of your dataset
 data_root_dir = /home/inayat/new_retraining_mobilenet/MyDataset ; path to the root folder of your dataset
 training_images_base_width = 558
 
+caffessd_root_dir = /home/inayat/new_retraining_mobilenet/caffe
+
 </pre>
 
 The training_images_base_width is an important configuration parameter to set. Basically, we need each of our training image size approximately around 200 kilo Bytes. Otherwise, the training will very long time. As we are fine tuning the already trained model for our custom data, therefore I have used CPU only and kepth training_images_base_width to 558. 
+
+**todo explain caffessd_root_dir **
 
 Make sure that all images collected and place in right place and are formatted as either .jpg or .png. Finally, run  [00_resizeImagesindataset.py](00_resizeImagesindataset.py ) as follows in your python enviroment:
 
@@ -165,12 +169,101 @@ python 02_createtrainvaldata.py
 Since my dataset is very small, therefore by default the above script will put all the dataset files both files. However, in generall you should separate your dataset into say 80% training and 20% test files.
 
 
+## Step-03: Creating LMDB dataset 
+
+Here, we will create the actual LMDB dataset which is to be used by caffe during training on your custom dataset.
+
+<pre class="brush: bash; title: ; notranslate" title="">
+./03_create_dataset.sh 
+</pre>
+
+This bash script create the following LMDB files and folder on your **data_root_dir** path
+
+
+<pre class="brush: bash; title: ; notranslate" title="">
+
+"$dataset_name"/
+		
+		| images/
+		
+		| labels/
+		
+		| structure
+		
+		|"$dataset_name"/lmdb/${dataset_name}_trainval_lmdb  (newly created)
+		
+		|"$dataset_name"/lmdb/${dataset_name}_test_lmdb (newly created)
+
+</pre>
+
+and some softlinks to these folders in the **examples** folder in the **caffessd_root_dir**
+
+
+### Create soft-links trainval_lmdb, test_lmdb and labelmap.prototxt in the current directory
+
+In the current folder, create short cuts or soft links, trainval_lmdb  and test_lmdb, by executing the following script: 
+
+<pre class="brush: bash; title: ; notranslate" title="">
+./03_2_create_softlinks.sh 
+</pre>
+
+## Step-4: Generate prototxt files MobileNetSSD_train.prototxt, MobileNetSSD_test.prototxt, and MobileNetSSD_deploy.prototxt
+
+Now use the **04_gen_model.sh** script to generate the required prototxt files for your dataset.
+
+This script needs the number of class as argument. **It is important to make sure that you have counted the background as a class**
+
+For my ucwinData the total number of classes is 6:
+
+<pre class="brush: bash; title: ; notranslate" title="">
+./04_gen_model.sh 6
+</pre>
+
+This script will create the following model files in the new created folder **example** on the current directory path.
 
 
 
-Something like this:
+## Step-5: Start training the Model using caffe-ssd
 
-remaining steps are coming soon
+
+solver_train.prototxt
+
+
+mobilenet_iter_73000.caffemodel
+
+
+<pre class="brush: bash; title: ; notranslate" title="">
+./05_train.sh
+</pre>
+
+You can specify which gpu to use by opening this file and editing the last line. You should get something like this on GPU:
+
+
+## Step-6 : After Training, 
+
+When you training is done, it is time to generate the model for deployment. To do that, use the  file merge_bin.py
+
+<pre class="brush: bash; title: ; notranslate" title="">
+python  06_merge_bn.py
+</pre>
+
+
+## Step-7: The Final Step, Use OpenCV for detection in Video
+
+<pre class="brush: bash; title: ; notranslate" title="">
+python 07_video_detection_opencv_ver.py -v ../movs/recording.avi
+
+</pre>
+
+
+Finally, test you newly generated model. 
+
+
+## Results
+
+
+
+[![UC-Win/Road](http://img.youtube.com/vi/ylVM_xXP8HE/0.jpg)](https://youtu.be/ylVM_xXP8HE "UCwinRoadData ")
 
 
 # Frozen Elsa Dataset and Detection
