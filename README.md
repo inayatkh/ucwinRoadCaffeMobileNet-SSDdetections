@@ -72,7 +72,7 @@ Now using your favourite text editor, edit [settings-config.ini](settings-config
 <pre class="brush: bash; title: ; notranslate" title="">
 
 ; settings-config.ini
-; This file must be edited by setting various paths accodingly
+; This file must be edited for setting various paths accoding your own system paths
 [DEFAULT]
 dataset_name = ucwinRoadData ; name of your dataset
 data_root_dir = /home/inayat/new_retraining_mobilenet/MyDataset ; path to the root folder of your dataset
@@ -82,10 +82,10 @@ training_images_base_width = 558
 
 The training_images_base_width is an important configuration parameter to set. Basically, we need each of our training image size approximately around 200 kilo Bytes. Otherwise, the training will very long time. As we are fine tuning the already trained model for our custom data, therefore I have used CPU only and kepth training_images_base_width to 558. 
 
-Make sure that all images collected and place in right place and are formatted as either .jpg or .png. Finally, run  [01_createtrainvaldata.py](01_createtrainvaldata.py ) as follows in your python enviroment:
+Make sure that all images collected and place in right place and are formatted as either .jpg or .png. Finally, run  [00_resizeImagesindataset.py](00_resizeImagesindataset.py ) as follows in your python enviroment:
 
 <pre class="brush: bash; title: ; notranslate" title="">
-python 01_createtrainvaldata.py 
+python 00_resizeImagesindataset.py 
 </pre>
 
 
@@ -99,19 +99,76 @@ pip install labelImg
 
 </pre>
 
-Using the LabelImg GUI, browse the images directory, which were resized in the previous step. Set "Change Save Directory"  in the LabelImg tool to ***data_root_dir/dataset_name/labels/***. By preesing keyboard Key "W" one can draw a box around any object in the image very easily. After, saving the annotation all the corresponding xml file will be saved in the labels folder. An example is shown bellow:
+Using the LabelImg GUI, browse the images directory, which were resized in the previous step. Set "Change Save Directory"  in the LabelImg tool to **data_root_dir/dataset_name/labels/**. By pressing Key "W" one can draw a box around any object in the image very easily. After, saving the annotation all the corresponding xml file will be saved in the labels folder. An example is shown bellow:
 
 <p align="center">
   <img src="images/labelImg.png"  title="Tech.Divas"
 </p>
 
-Try to use the similar spellings for similar category names. Notice that it is necessary to annotate objects in all images. Remove the image if there is no object class is labeled.
+Try to use the same names  for same object class names. Notice that it is necessary to annotate objects in all images. Remove the image if there is no object class is labeled.
 
-### Step-2:  Creating trainval.txt, test.txt and labelmap.prototxt Files
+### Step-2:  Creating labelmap.prototxt and trainval.txt, test.txt and Files
 
-In this step, I will explain how to create trainval.txt, test.txt, labelmap.prototxt files. These are very essential files using in the training process.
+In this step, I will explain how to create trainval.txt, test.txt, labelmap.prototxt files. These are very essential files to be used in the training process. Make, sure that you have all of your image files in images/ and all of your labels xml in labels/  folders in your **data_root_dir/dataset_name/** folder.
+
+#### labelmap.prototxt
+First using your favorite text file editor, we need to create **labelmap.prototxt** in the dataset folder **data_root_dir/dataset_name/**. Depending on the classes in the dataset; for **ucwindata** this file should look like this 
+<pre class="brush: bash; title: ; notranslate" title="">
+item {
+  name: "none_of_the_above"
+  label: 0
+  display_name: "background"
+}
+item {
+  name: "car"
+  label: 1
+  display_name: "car"
+}
+item {
+  name: "bus"
+  label: 2
+  display_name: "bus"
+}
+item {
+  name: "streetlight"
+  label: 3
+  display_name: "streetlight"
+}
+
+item {
+  name: "person"
+  label: 4
+  display_name: "person"
+}
+
+item {
+  name: "bike"
+  label: 5
+  display_name: "bike"
+}
+
+</pre>
+
+**Important to note** that the first lable: **none_of_the_above** has to be  as shown above for every dataset5. You need to start your custom labels with  the index number 1. 
+
+#### trainval.txt and test.txt files
+
+Now,  we  have to create files called trainval.txt and test.text in the **data_root_dir/dataset_name/structure/** directory.
+
+These files contains the list of the training and test dataset files names. Here, I am using a very small dataset named "ucwinRoadData". The complete paths should be set  in the **settings-config.ini** files.
+Then run the following command for creation of these files:
+
+<pre class="brush: bash; title: ; notranslate" title="">
+python 02_createtrainvaldata.py
+</pre>
+
+Since my dataset is very small, therefore by default the above script will put all the dataset files both files. However, in generall you should separate your dataset into say 80% training and 20% test files.
 
 
+
+
+
+Something like this:
 
 remaining steps are coming soon
 
