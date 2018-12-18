@@ -68,7 +68,7 @@ First of all create a directory structure or folders as following:
 
 Here my dataset_name= "ucwinRoadData". You should copy all your images collected previously in the images folder of your dataset folder, you have just created.
 
-Now using your favourite text editor, edit [settings-config.ini](settings-config.ini) for setting various paths and variables according to your system. 
+Now using your favourite text editor, edit [settings-config.ini](settings-config.ini) for setting various paths and variables according to your system. This file is very important, all the paths and parameter values are set once in this file. The scripts in the rest of the steps use this file for reading their required values from this file. 
 <pre class="brush: bash; title: ; notranslate" title="">
 
 ; settings-config.ini
@@ -80,11 +80,14 @@ training_images_base_width = 558
 
 caffessd_root_dir = /home/inayat/new_retraining_mobilenet/caffe
 
+[DEPLOY]
+train_iter_model = 45000
+
 </pre>
 
-The training_images_base_width is an important configuration parameter to set. Basically, we need each of our training image size approximately around 200 kilo Bytes. Otherwise, the training will very long time. As we are fine tuning the already trained model for our custom data, therefore I have used CPU only and kepth training_images_base_width to 558. 
+First of all set the value for **dataset_name** this should the  folder name as explained above. Then set the path value for the **data_root_dir**, which should be the root path value of the folder where you have created your dataset.
 
-**todo explain caffessd_root_dir **
+The **training_images_base_width** is an important configuration parameter to set. Basically, we need each of our training image size approximately around 200 kilo Bytes. Otherwise, the training will very long time. As we are fine tuning the already trained model for our custom data, therefore I have used CPU only and kepth training_images_base_width to 558. 
 
 Make sure that all images collected and place in right place and are formatted as either .jpg or .png. Finally, run  [00_resizeImagesindataset.py](00_resizeImagesindataset.py ) as follows in your python enviroment:
 
@@ -92,6 +95,9 @@ Make sure that all images collected and place in right place and are formatted a
 python 00_resizeImagesindataset.py 
 </pre>
 
+Presuming you have install Python ver >= 3 using Anaconda and all the prequistes for [Caffe-SSD](https://github.com/chuanqi305)  are intalled and you have donwloaded it on your system. The **caffessd_root_dir** must be set pointing to the installed directory for
+
+**todo explain caffessd_root_dir **
 
 ### Step-1:  Label the Objects in your Dataset
 
@@ -111,12 +117,14 @@ Using the LabelImg GUI, browse the images directory, which were resized in the p
 
 Try to use the same names  for same object class names. Notice that it is necessary to annotate objects in all images. Remove the image if there is no object class is labeled.
 
+Forexample, you can use my dataset **ucwinRoadData** available **here in this repository folder named mydataset**. Download and unzip in your system folder.
+
 ### Step-2:  Creating labelmap.prototxt and trainval.txt, test.txt and Files
 
 In this step, I will explain how to create trainval.txt, test.txt, labelmap.prototxt files. These are very essential files to be used in the training process. Make, sure that you have all of your image files in images/ and all of your labels xml in labels/  folders in your **data_root_dir/dataset_name/** folder.
 
 #### labelmap.prototxt
-First using your favorite text file editor, we need to create **labelmap.prototxt** in the dataset folder **data_root_dir/dataset_name/**. Depending on the classes in the dataset; for **ucwindata** this file should look like this 
+First using your favorite text file editor, we need to create **labelmap.prototxt** in the dataset folder **data_root_dir/dataset_name/**. Depending on the classes in the dataset; for my dataset **ucwinRoadData** this file should look like this 
 <pre class="brush: bash; title: ; notranslate" title="">
 item {
   name: "none_of_the_above"
@@ -209,64 +217,86 @@ In the current folder, create short cuts or soft links, trainval_lmdb  and test_
 
 ## Step-4: Generate prototxt files MobileNetSSD_train.prototxt, MobileNetSSD_test.prototxt, and MobileNetSSD_deploy.prototxt
 
-Now use the **04_gen_model.sh** script to generate the required prototxt files for your dataset.
+Now use the **04_gen_model.sh** script to generate the required prototxt files for your own dataset.
 
 This script needs the number of class as argument. **It is important to make sure that you have counted the background as a class**
 
-For my ucwinData the total number of classes is 6:
+In my dataset **ucwinData** the total number of classes is 6:
 
 <pre class="brush: bash; title: ; notranslate" title="">
 ./04_gen_model.sh 6
 </pre>
 
-This script will create the following model files in the new created folder **example** on the current directory path.
+This script will create the following prototxt files in the newly made folder **example**  in the current path:
+
+- MobileNetSSD_train.prototxt
+- MobileNetSSD_test.prototxt, and
+- MobileNetSSD_deploy.prototxt
 
 
 
 ## Step-5: Start training the Model using caffe-ssd
 
 
-solver_train.prototxt
+This is an important step. Actually all the steps discussed above are settings for this step.  The code script used in this step is shown bellow:
+<pre class="brush: bash; title: ; notranslate" title="">
+./05_train.sh
+
+#!/bin/sh
 
 
-mobilenet_iter_73000.caffemodel
+caffessd_root_dir=$(./readconfig_ini_file.py settings-config.ini DEFAULT caffessd_root_dir)
 
+$cd $caffessd_root_dir
+
+if ! test -f example/MobileNetSSD_train.prototxt ;then
+	echo "error: example/MobileNetSSD_train.prototxt does not exist."
+	echo "please use the gen_model.sh to generate your own model."
+        exit 1
+fi
+mkdir -p snapshot
+$caffessd_root_dir/build/tools/caffe train -solver="solver_train.prototxt" \
+-weights="mobilenet_iter_73000.caffemodel" 
+ #-gpu 0 
+ 
+</pre>
+
+The important settings here is the **weights="mobilenet_iter_73000.caffemodel"** parameter passed to the caffe-SSD tain method. You can specify which gpu to use by opening this file and editing the last line.  This step enable you to fine tune the already trained weights **mobilenet_iter_73000.caffemodel** for your own objects dataset. Execute this script as :
 
 <pre class="brush: bash; title: ; notranslate" title="">
 ./05_train.sh
 </pre>
 
-You can specify which gpu to use by opening this file and editing the last line. You should get something like this on GPU:
+This script will save the caffe model after every 1000 iteration in  the directory named **snapshot**
 
 
 ## Step-6 : After Training, 
 
-When you training is done, it is time to generate the model for deployment. To do that, use the  file merge_bin.py
+When you training is done, it is time to generate the model for deployment. To do that, execute the following
 
 <pre class="brush: bash; title: ; notranslate" title="">
 python  06_merge_bn.py
 </pre>
 
+It is important to set the value of **train_iter_model** in  file [settings-config.ini](settings-config.ini) in order to specify the iteration number of the trained model to be deployed  already saved in the sanpshot folder. This will create a model in the **deploy** directory.
 
 ## Step-7: The Final Step, Use OpenCV for detection in Video
 
+Finally, test your trained model by detecting objects in a video file as :
 <pre class="brush: bash; title: ; notranslate" title="">
 python 07_video_detection_opencv_ver.py -v ../movs/recording.avi
-
 </pre>
 
+The output of this command will be saved in current folder.
 
-Finally, test you newly generated model. 
-
-
-## Results
+**The test video is provided [here](https://drive.google.com/open?id=1vjVIBjo0C2Rs7VrpSdBdxsH3vCrAX0_x)**.
 
 
-
+You can see the results here for my dataset **ucwinRoadData**
 [![UC-Win/Road](http://img.youtube.com/vi/ylVM_xXP8HE/0.jpg)](https://youtu.be/ylVM_xXP8HE "UCwinRoadData ")
 
 
-# Frozen Elsa Dataset and Detection
+and another model for my **Frozen Elsa** dataset. The number of classes were **('background','bigGirl','smallGirl','dog')**
 
 
 

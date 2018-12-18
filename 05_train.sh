@@ -1,6 +1,7 @@
 #!/bin/sh
 
-caffessd_root_dir=/home/inayat/new_retraining_mobilenet/caffe
+
+caffessd_root_dir=$(./readconfig_ini_file.py settings-config.ini DEFAULT caffessd_root_dir)
 
 $cd $caffessd_root_dir
 
@@ -11,6 +12,5 @@ if ! test -f example/MobileNetSSD_train.prototxt ;then
 fi
 mkdir -p snapshot
 $caffessd_root_dir/build/tools/caffe train -solver="solver_train.prototxt" \
--weights="deploy/MobileNetSSD_deploy_7000_ucwinObjects.caffemodel" 
-#-weights="mobilenet_iter_73000.caffemodel" 
+-weights="mobilenet_iter_73000.caffemodel" 
 #-gpu 0 

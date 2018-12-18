@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     #dataset_name="frozenElsaDataSet" 
 
-    train_iter_model = "45000"
+    train_iter_model =  config['DEPLOY']['train_iter_model']
    
 
     dataset_name = config['DEFAULT']['dataset_name']

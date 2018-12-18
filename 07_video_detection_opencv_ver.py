@@ -66,7 +66,7 @@ if __name__ == '__main__':
 	config = configparser.ConfigParser()
 	config.read('settings-config.ini')
 
-	train_iter_model = "45000"
+	train_iter_model = config['DEPLOY']['train_iter_model']
 
 	dataset_name = config['DEFAULT']['dataset_name']
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
 	caffe_model='deploy/MobileNetSSD_deploy_{}_{}.caffemodel'.format(train_iter_model,dataset_name) 
 
-	test_vid_dir = "/home/inayat/new_retraining_mobilenet/MyDataset/{}/video/test_1.mp4".format(dataset_name)
+	
 
 	#" for frozenElsaDataSet"
 	'''
